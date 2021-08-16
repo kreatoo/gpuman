@@ -29,7 +29,7 @@ fi
 case $1 in
 "--help" | "-h" )
 printf """usage: ${GREEN}gpuman${NC} [${GREEN}--version${NC}] [${GREEN}--help${NC}] [${GREEN}--switch${NC}] ${GREEN}nvidia/intel${NC}
-Set brightness.
+Manage used GPU.
 
 positional arguments:
 ${BLUE}nvidia/intel${NC}       GPU name (available GPUs are nvidia and intel)
