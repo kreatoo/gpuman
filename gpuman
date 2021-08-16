@@ -20,6 +20,12 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
+if [ "$XORG" = "" ]; then
+	XORG=sx
+fi
+if [ "$ROOT" = "" ]; then
+	ROOT=doas
+fi
 case $1 in
 "--help" | "-h" )
 printf """usage: ${GREEN}gpuman${NC} [${GREEN}--version${NC}] [${GREEN}--help${NC}] [${GREEN}--switch${NC}] ${GREEN}nvidia/intel${NC}
@@ -32,12 +38,24 @@ optional arguments:
  ${BLUE}-h${NC}, ${GREEN}--help${NC}    show this help message and exit
  ${BLUE}-s${NC}, ${GREEN}--switch${NC}  switch the GPU
  ${BLUE}-v${NC}, ${GREEN}--version${NC} display version number
+ ${BLUE}-g${NC}, ${GREEN}--gpu${NC}     display running GPU
+environment variables:
+  ${BLUE}ROOT${NC} the command gpuman uses to gain root access, ${BLUE}doas${NC} is the default
+  ${BLUE}XORG${NC} the xorg command that gpuman kills in order to kill the Xorg, ${BLUE}sx${NC} is the default
  \n"""
  ;;
 "--version" | "-v" )
-	printf  "${BLUE}gpu${GREEN}man ${BLUE}v1.2${NC}\n"
+	printf  "${BLUE}gpu${GREEN}man ${BLUE}v1.3${NC}\n"
 	;;
-
+"--gpu" | "-g" )
+	if [ "$(glxinfo | grep 'Intel' > /dev/null ; echo $?)" = "0" ]; then
+		printf "${BLUE}GPU${NC}: ${BLUE}intel${NC}\n"
+	elif [ "$(glxinfo | grep 'NVIDIA' > /dev/null ; echo $?)" = "0" ]; then
+		printf "${GREEN}GPU${NC}: ${GREEN}nvidia${NC}\n"
+	else
+		printf "${RED}error${NC}: An error occured while trying to detect the GPU! Check if you have glxinfo installed!\n"
+	fi
+	;;
 "--switch" | "-s" ) 
 	if [ "$2" = "" ]; then
 		printf "${RED}error${NC}: please specify a gpu (options are intel and nvidia)\n"
@@ -63,18 +81,18 @@ Section "OutputClass"
     	ModulePath "/usr/lib/nvidia/xorg"
 	ModulePath "/usr/lib/xorg/modules"
 EndSection
-		''' | doas tee /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+		''' | $ROOT tee /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
 		printf "${BLUE}killing xorg${NC}\n"
-		killall sx
+		killall $XORG
 	elif [ "$2" = "intel" ]; then
 		printf "${BLUE}switching back to intel...${NC}\n"
 		sed -i 's/xrandr --setprovideroutputsource modesetting NVIDIA-0/ /g'  ~/.config/sx/sxrc
 		sed -i 's/xrandr --auto/ /g'  ~/.config/sx/sxrc
 		sed -i 's/xrandr --dpi 96/ /g'  ~/.config/sx/sxrc
 		printf "${BLUE}removing xorg config, you need to give your password when asked${NC}\n"
-		doas rm -f /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+		$ROOT rm -f /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
 		printf "${BLUE}killing xorg...${NC}\n"
-		killall sx
+		killall $XORG
 	else
 		printf "${RED}error${NC}: invalid gpu name (only options are intel and nvidia)\n"
 	fi
