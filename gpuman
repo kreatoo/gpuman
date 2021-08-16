@@ -1,0 +1,85 @@
+#!/bin/sh
+# gpuman
+# Copyright 2021 <kreato@kreatea.space>
+#
+# This file is part of gpuman.
+#
+# gpuman is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# gpuman is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with gpuman. If not, see <https://www.gnu.org/licenses/>.
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+case $1 in
+"--help" | "-h" )
+printf """usage: ${GREEN}gpuman${NC} [${GREEN}--version${NC}] [${GREEN}--help${NC}] [${GREEN}--switch${NC}] ${GREEN}nvidia/intel${NC}
+Set brightness.
+
+positional arguments:
+${BLUE}nvidia/intel${NC}       GPU name (available GPUs are nvidia and intel)
+
+optional arguments:
+ ${BLUE}-h${NC}, ${GREEN}--help${NC}    show this help message and exit
+ ${BLUE}-s${NC}, ${GREEN}--switch${NC}  switch the GPU
+ ${BLUE}-v${NC}, ${GREEN}--version${NC} display version number
+ \n"""
+ ;;
+"--version" | "-v" )
+	printf  "${BLUE}gpu${GREEN}man ${BLUE}v1.2${NC}\n"
+	;;
+
+"--switch" | "-s" ) 
+	if [ "$2" = "" ]; then
+		printf "${RED}error${NC}: please specify a gpu (options are intel and nvidia)\n"
+	elif [ "$2" = "nvidia" ]; then
+		printf "${BLUE}switching to nvidia${NC}\n"
+		sed -i '1 i\xrandr --setprovideroutputsource modesetting NVIDIA-0' ~/.config/sx/sxrc 
+		sed -i '2 i\xrandr --auto' ~/.config/sx/sxrc 
+		sed -i '3 i\xrandr --dpi 96' ~/.config/sx/sxrc
+		printf "${BLUE}installing xorg config, you need to give your password when asked${NC}\n"
+		echo '''
+Section "OutputClass"
+    	Identifier "intel"
+    	MatchDriver "i915"
+    	Driver "modesetting"
+EndSection
+
+Section "OutputClass"
+    	Identifier "nvidia"
+    	MatchDriver "nvidia-drm"
+    	Driver "nvidia"
+    	Option "AllowEmptyInitialConfiguration"
+    	Option "PrimaryGPU" "yes"
+    	ModulePath "/usr/lib/nvidia/xorg"
+	ModulePath "/usr/lib/xorg/modules"
+EndSection
+		''' | doas tee /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+		printf "${BLUE}killing xorg${NC}\n"
+		killall sx
+	elif [ "$2" = "intel" ]; then
+		printf "${BLUE}switching back to intel...${NC}\n"
+		sed -i 's/xrandr --setprovideroutputsource modesetting NVIDIA-0/ /g'  ~/.config/sx/sxrc
+		sed -i 's/xrandr --auto/ /g'  ~/.config/sx/sxrc
+		sed -i 's/xrandr --dpi 96/ /g'  ~/.config/sx/sxrc
+		printf "${BLUE}removing xorg config, you need to give your password when asked${NC}\n"
+		doas rm -f /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+		printf "${BLUE}killing xorg...${NC}\n"
+		killall sx
+	else
+		printf "${RED}error${NC}: invalid gpu name (only options are intel and nvidia)\n"
+	fi
+	;;
+*)
+	 printf "${RED}error${NC}: please specify an proper argument, ${GREEN}--help${NC} for help\n"
+
+esac		

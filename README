@@ -1,0 +1,28 @@
+gpuman - a simple gpu manager
+=============================
+gpuman is a simple gpu manager for NVIDIA Optimus capable laptops written in POSIX.
+
+Project meaning
+---------------
+Optimus-manager never works for me, and i want to use only my dedicated GPU sometimes. 
+
+
+Dependencies
+------------
+gpuman assumes that you have Xorg setup, sx and NVIDIA drivers installed and working properly.
+
+
+Installation
+------------
+copy `gpuman` onto /usr/bin or any PATH you would prefer.
+
+Credits
+-------
+optimus-manager for the idea
+readme from nimfetch, based off bright.sh
+commands taken from the arch wiki
+
+License
+-------
+License is GPLv3, check LICENSE for more information.
+
