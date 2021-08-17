@@ -61,6 +61,9 @@ environment variables:
 $(env)
 """
 ;;
+"--run" | "-r" )
+	__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia glxinfo
+	;;
 "--version" | "-v" )
 	printf  "${BLUE}gpu${GREEN}man ${BLUE}v1.4${NC}\n"
 	;;
@@ -82,6 +85,22 @@ $(env)
 		        sed -i '1 i\xrandr --setprovideroutputsource modesetting NVIDIA-0' ~/.xinitrc
                 	sed -i '2 i\xrandr --auto' ~/.xinitrc
                 	sed -i '3 i\xrandr --dpi 96' ~/.xinitrc
+		elif [ "$XORG" = "lightdm" ]
+		printf "${BLUE}installing lightdm script, you need to give your password when asked${NC}\n"
+			echo '''
+#!/bin/sh
+xrandr --setprovideroutputsource modesetting NVIDIA-0
+xrandr --auto
+# Run the rest of the arguments.
+# -
+$($@)
+''' | $ROOT tee /usr/local/bin/prepare-optimus.sh
+$ROOT cp -f /etc/lightdm/lightdm.conf /etc/lightdm/lightdm.conf.bak                        
+echo '''
+                        [Seat:*]
+# display-setup-script = Script to run when starting a greeter session (runs as root)
+display-setup-script=/usr/local/bin/prepare-optimus.sh
+''' | $ROOT tee -a /etc/lightdm/lightdm.conf
 		else
 			sed -i '1 i\xrandr --setprovideroutputsource modesetting NVIDIA-0' ~/.config/sx/sxrc 
 			sed -i '2 i\xrandr --auto' ~/.config/sx/sxrc 
@@ -113,6 +132,10 @@ EndSection
 		      sed -i 's/xrandr --setprovideroutputsource modesetting NVIDIA-0/ /g'  ~/.xinitrc
                       sed -i 's/xrandr --auto/ /g'  ~/.xinitrc
   	              sed -i 's/xrandr --dpi 96/ /g'  ~/.xinitrc
+		elif [ "$XORG" = "lightdm" ]
+	      		printf "${BLUE}removing lightdm script, you need to give your password when asked${NC}\n"
+			$ROOT rm -f /usr/local/bin/prepare-optimus.sh
+			$ROOT cp -f /etc/lightdm/lightdm.conf.bak /etc/lightdm/lightdm.conf 
 		else
 			sed -i 's/xrandr --setprovideroutputsource modesetting NVIDIA-0/ /g'  ~/.config/sx/sxrc
 			sed -i 's/xrandr --auto/ /g'  ~/.config/sx/sxrc
