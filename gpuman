@@ -20,6 +20,7 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
+VERSION=1.4
 if [ "$XORG" = "" ]; then
 	XORG=sx
 fi
@@ -28,7 +29,7 @@ if [ "$ROOT" = "" ]; then
 fi
 case $1 in
 "--help" | "-h" )
-printf """usage: ${GREEN}gpuman${NC} [${GREEN}--version${NC}] [${GREEN}--help${NC}] [${GREEN}--switch${NC}] ${GREEN}nvidia/intel${NC}
+printf """usage: ${GREEN}gpuman${NC} [${GREEN}--version${NC}] [${GREEN}--help${NC}] [${GREEN}--debug${NC}] [${GREEN}--switch${NC}] ${GREEN}nvidia/intel${NC}
 Manage used GPU.
 
 positional arguments:
@@ -39,13 +40,29 @@ optional arguments:
  ${BLUE}-s${NC}, ${GREEN}--switch${NC}  switch the GPU
  ${BLUE}-v${NC}, ${GREEN}--version${NC} display version number
  ${BLUE}-g${NC}, ${GREEN}--gpu${NC}     display running GPU
+ ${BLUE}-d${NC}, ${GREEN}--debug${NC}   display debug information, required for opening an issue
 environment variables:
   ${BLUE}ROOT${NC} the command gpuman uses to gain root access, ${BLUE}doas${NC} is the default
   ${BLUE}XORG${NC} the xorg command that gpuman kills in order to kill the Xorg, ${BLUE}sx${NC} is the default
  \n"""
  ;;
+"--debug" | "-d" )
+	printf """
+debug information:
+XORG variable: $XORG
+ROOT variable $ROOT
+version: $VERSION
+system information:
+glxinfo output (with grep):
+$(glxinfo | grep "OpenGL")
+checking if nvidia-smi runs without an issue (0 means works, anything else means it doesnt)
+$(nvidia-smi > /dev/null ; echo $?)
+environment variables:
+$(env)
+"""
+;;
 "--version" | "-v" )
-	printf  "${BLUE}gpu${GREEN}man ${BLUE}v1.3${NC}\n"
+	printf  "${BLUE}gpu${GREEN}man ${BLUE}v1.4${NC}\n"
 	;;
 "--gpu" | "-g" )
 	if [ "$(glxinfo | grep 'Intel' > /dev/null ; echo $?)" = "0" ]; then
@@ -61,9 +78,15 @@ environment variables:
 		printf "${RED}error${NC}: please specify a gpu (options are intel and nvidia)\n"
 	elif [ "$2" = "nvidia" ]; then
 		printf "${BLUE}switching to nvidia${NC}\n"
-		sed -i '1 i\xrandr --setprovideroutputsource modesetting NVIDIA-0' ~/.config/sx/sxrc 
-		sed -i '2 i\xrandr --auto' ~/.config/sx/sxrc 
-		sed -i '3 i\xrandr --dpi 96' ~/.config/sx/sxrc
+		if [ "$XORG" = "xinit" ] || [ "$XORG" = "startx" ]; then
+		        sed -i '1 i\xrandr --setprovideroutputsource modesetting NVIDIA-0' ~/.xinitrc
+                	sed -i '2 i\xrandr --auto' ~/.xinitrc
+                	sed -i '3 i\xrandr --dpi 96' ~/.xinitrc
+		else
+			sed -i '1 i\xrandr --setprovideroutputsource modesetting NVIDIA-0' ~/.config/sx/sxrc 
+			sed -i '2 i\xrandr --auto' ~/.config/sx/sxrc 
+			sed -i '3 i\xrandr --dpi 96' ~/.config/sx/sxrc
+		fi
 		printf "${BLUE}installing xorg config, you need to give your password when asked${NC}\n"
 		echo '''
 Section "OutputClass"
@@ -86,9 +109,15 @@ EndSection
 		killall $XORG
 	elif [ "$2" = "intel" ]; then
 		printf "${BLUE}switching back to intel...${NC}\n"
-		sed -i 's/xrandr --setprovideroutputsource modesetting NVIDIA-0/ /g'  ~/.config/sx/sxrc
-		sed -i 's/xrandr --auto/ /g'  ~/.config/sx/sxrc
-		sed -i 's/xrandr --dpi 96/ /g'  ~/.config/sx/sxrc
+		if [ "$XORG" = "xinit" ] || [ "$XORG" = "startx" ]; then
+		      sed -i 's/xrandr --setprovideroutputsource modesetting NVIDIA-0/ /g'  ~/.xinitrc
+                      sed -i 's/xrandr --auto/ /g'  ~/.xinitrc
+  	              sed -i 's/xrandr --dpi 96/ /g'  ~/.xinitrc
+		else
+			sed -i 's/xrandr --setprovideroutputsource modesetting NVIDIA-0/ /g'  ~/.config/sx/sxrc
+			sed -i 's/xrandr --auto/ /g'  ~/.config/sx/sxrc
+			sed -i 's/xrandr --dpi 96/ /g'  ~/.config/sx/sxrc
+		fi
 		printf "${BLUE}removing xorg config, you need to give your password when asked${NC}\n"
 		$ROOT rm -f /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
 		printf "${BLUE}killing xorg...${NC}\n"
