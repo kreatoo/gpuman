@@ -136,7 +136,7 @@ EndSection
 	      		printf "${BLUE}removing lightdm script, you need to give your password when asked${NC}\n"
 			$ROOT rm -f /usr/local/bin/prepare-optimus.sh
 			$ROOT cp -f /etc/lightdm/lightdm.conf.bak /etc/lightdm/lightdm.conf 
-		elif [ "$XORG" = "lightdm" ]; then
+		else
 			sed -i 's/xrandr --setprovideroutputsource modesetting NVIDIA-0/ /g'  ~/.config/sx/sxrc
 			sed -i 's/xrandr --auto/ /g'  ~/.config/sx/sxrc
 			sed -i 's/xrandr --dpi 96/ /g'  ~/.config/sx/sxrc
@@ -144,12 +144,8 @@ EndSection
 		printf "${BLUE}removing xorg config, you need to give your password when asked${NC}\n"
 		$ROOT rm -f /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
 		printf "${BLUE}killing xorg...${NC}\n"
-		if [ "$XORG" = "lightdm" ]; then
-			killall Xorg
-			killall X
-		else
-			killall $XORG
-		fi
+		killall Xorg
+		killall X
 	else
 		printf "${RED}error${NC}: invalid gpu name (only options are intel and nvidia)\n"
 	fi
