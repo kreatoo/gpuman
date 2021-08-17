@@ -85,8 +85,8 @@ $(env)
 		        sed -i '1 i\xrandr --setprovideroutputsource modesetting NVIDIA-0' ~/.xinitrc
                 	sed -i '2 i\xrandr --auto' ~/.xinitrc
                 	sed -i '3 i\xrandr --dpi 96' ~/.xinitrc
-		elif [ "$XORG" = "lightdm" ]
-		printf "${BLUE}installing lightdm script, you need to give your password when asked${NC}\n"
+		elif [ "$XORG" = "lightdm" ]; then
+			printf "${BLUE}installing lightdm script, you need to give your password when asked${NC}\n"
 			echo '''
 #!/bin/sh
 xrandr --setprovideroutputsource modesetting NVIDIA-0
@@ -94,14 +94,14 @@ xrandr --auto
 # Run the rest of the arguments.
 # -
 $($@)
-''' | $ROOT tee /usr/local/bin/prepare-optimus.sh
-$ROOT cp -f /etc/lightdm/lightdm.conf /etc/lightdm/lightdm.conf.bak                        
-echo '''
-                        [Seat:*]
+			''' | $ROOT tee /usr/local/bin/prepare-optimus.sh
+			$ROOT cp -f /etc/lightdm/lightdm.conf /etc/lightdm/lightdm.conf.bak                        
+			echo '''
+[Seat:*]
 # display-setup-script = Script to run when starting a greeter session (runs as root)
 display-setup-script=/usr/local/bin/prepare-optimus.sh
-''' | $ROOT tee -a /etc/lightdm/lightdm.conf
-		else
+			''' | $ROOT tee -a /etc/lightdm/lightdm.conf
+		else 
 			sed -i '1 i\xrandr --setprovideroutputsource modesetting NVIDIA-0' ~/.config/sx/sxrc 
 			sed -i '2 i\xrandr --auto' ~/.config/sx/sxrc 
 			sed -i '3 i\xrandr --dpi 96' ~/.config/sx/sxrc
@@ -132,11 +132,11 @@ EndSection
 		      sed -i 's/xrandr --setprovideroutputsource modesetting NVIDIA-0/ /g'  ~/.xinitrc
                       sed -i 's/xrandr --auto/ /g'  ~/.xinitrc
   	              sed -i 's/xrandr --dpi 96/ /g'  ~/.xinitrc
-		elif [ "$XORG" = "lightdm" ]
+		elif [ "$XORG" = "lightdm" ]; then
 	      		printf "${BLUE}removing lightdm script, you need to give your password when asked${NC}\n"
 			$ROOT rm -f /usr/local/bin/prepare-optimus.sh
 			$ROOT cp -f /etc/lightdm/lightdm.conf.bak /etc/lightdm/lightdm.conf 
-		else
+		elif [ "$XORG" = "lightdm" ]; then
 			sed -i 's/xrandr --setprovideroutputsource modesetting NVIDIA-0/ /g'  ~/.config/sx/sxrc
 			sed -i 's/xrandr --auto/ /g'  ~/.config/sx/sxrc
 			sed -i 's/xrandr --dpi 96/ /g'  ~/.config/sx/sxrc
@@ -144,7 +144,12 @@ EndSection
 		printf "${BLUE}removing xorg config, you need to give your password when asked${NC}\n"
 		$ROOT rm -f /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
 		printf "${BLUE}killing xorg...${NC}\n"
-		killall $XORG
+		if [ "$XORG" = "lightdm" ]; then
+			killall Xorg
+			killall X
+		else
+			killall $XORG
+		fi
 	else
 		printf "${RED}error${NC}: invalid gpu name (only options are intel and nvidia)\n"
 	fi
