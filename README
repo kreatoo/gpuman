@@ -9,7 +9,7 @@ Optimus-manager never works for me, and i want to use only my dedicated GPU some
 
 Dependencies
 ------------
-gpuman assumes that you have Xorg setup, sx and NVIDIA drivers installed and working properly.
+gpuman assumes that you have Xorg setup, sx, doas and NVIDIA drivers installed and working properly (you can check if the NVIDIA drivers are installed properly by running `nvidia-smi`) . You can use xinit (startx) instead of sx, and sudo instead of doas through environment variables. See help for more details.
 
 
 Installation
