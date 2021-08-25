@@ -20,7 +20,7 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
-VERSION=1.4
+VERSION=1.4.1
 if [ "$XORG" = "" ]; then
 	XORG=sx
 fi
@@ -65,7 +65,7 @@ $(env)
 	__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia glxinfo
 	;;
 "--version" | "-v" )
-	printf  "${BLUE}gpu${GREEN}man ${BLUE}v1.4${NC}\n"
+	printf  "${BLUE}gpu${GREEN}man ${BLUE}v$VERSION${NC}\n"
 	;;
 "--gpu" | "-g" )
 	if [ "$(glxinfo | grep 'Intel' > /dev/null ; echo $?)" = "0" ]; then
@@ -107,6 +107,9 @@ display-setup-script=/usr/local/bin/prepare-optimus.sh
 			sed -i '3 i\xrandr --dpi 96' ~/.config/sx/sxrc
 		fi
 		printf "${BLUE}installing xorg config, you need to give your password when asked${NC}\n"
+		if [[ ! -d "/etc/X11/xorg.conf.d/" ]]; then
+    			$ROOT mkdir -p /etc/X11/xorg.conf.d/
+		fi
 		echo '''
 Section "OutputClass"
     	Identifier "intel"
